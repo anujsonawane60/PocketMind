@@ -9,16 +9,59 @@ PocketMind turns a USB drive into a portable, private AI assistant.
 Your AI runs locally. Your memories stay locally. Your documents stay locally.
 Your private vault stays encrypted. There is no account, no subscription, and no telemetry.
 
-```
-┌─────────────────────────────┐
-│        PocketMind           │
-│                             │
-│  "What do you remember      │
-│   about my projects?"       │
-│                             │
-│  [ Ask PocketMind...      ] │
-└─────────────────────────────┘
-```
+![PocketMind chat, answering from the user's own documents](docs/images/04-chat.png)
+
+---
+
+## What it looks like
+
+<details open>
+<summary><b>Setup</b> — pick a drive, check the computer, choose a model</summary>
+
+<br>
+
+Only drives the operating system confirms are external and non-booting can be selected.
+Internal drives are listed with the reason they cannot be used, so the safety rule is visible
+rather than mysterious.
+
+![Choosing a drive: internal and system drives are shown but disabled](docs/images/01-drive-selection.png)
+
+PocketMind reads the CPU, memory and graphics card, and rates the machine honestly rather
+than flatteringly.
+
+![Hardware detection with a performance rating](docs/images/02-hardware.png)
+
+Models are then ranked for *this* computer and *this* drive, with the reasoning shown. Sizes
+are fetched live from the provider, and anything that will not fit is disabled with an
+explanation instead of being silently hidden.
+
+![Model recommendations with the reasoning behind each one](docs/images/03-model-recommendation.png)
+
+</details>
+
+<details>
+<summary><b>The assistant</b> — memory, documents, vault</summary>
+
+<br>
+
+Memories are retrieved when relevant, never dumped wholesale into the prompt. Everything is
+visible, editable and deletable.
+
+![The memory screen listing what PocketMind remembers](docs/images/05-memory.png)
+
+Documents are chunked and indexed on the drive. Answers cite the file they came from.
+
+![The documents screen showing indexed files and passage counts](docs/images/06-documents.png)
+
+The vault is deliberately separate from AI memory. Entry names are encrypted along with their
+values, and the assistant has no path to read any of it.
+
+![The vault, unlocked, listing stored secrets](docs/images/07-vault.png)
+
+</details>
+
+> Screenshots use a sample profile and sample documents. The chat answers are real output from
+> the local model running on the drive.
 
 ---
 

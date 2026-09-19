@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -25,10 +26,38 @@ from pocketmind.services.vault import VaultAuthError, VaultExists, VaultLocked, 
 
 log = get_logger()
 
-_ALLOWED_ORIGINS = {
-    f"http://{config.SERVER_HOST}:{config.SERVER_PORT}",
-    f"http://localhost:{config.SERVER_PORT}",
-}
+#: Names that all mean "this computer", so localhost and 127.0.0.1 are
+#: interchangeable as long as the port matches.
+_LOOPBACK = {"127.0.0.1", "localhost", "::1", "[::1]"}
+
+
+def _split_host(value: str) -> tuple[str, int | None]:
+    host, _, port = value.rpartition(":")
+    if host and port.isdigit():
+        return host.strip("[]").lower(), int(port)
+    return value.strip("[]").lower(), None
+
+
+def is_same_origin(origin: str, host_header: str) -> bool:
+    """Does this Origin refer to the server handling the request?
+
+    Compared against the request's own Host rather than a fixed port, so
+    PocketMind still works when started with --port.
+    """
+    parsed = urlparse(origin)
+    if parsed.scheme not in ("http", "https"):
+        return False
+    origin_host = (parsed.hostname or "").lower()
+    origin_port = parsed.port or (443 if parsed.scheme == "https" else 80)
+
+    host, port = _split_host(host_header)
+    host_port = port if port is not None else 80
+
+    if origin_port != host_port:
+        return False
+    if origin_host in _LOOPBACK and host in _LOOPBACK:
+        return True
+    return origin_host == host
 
 
 @asynccontextmanager
@@ -73,7 +102,7 @@ async def guard_origin(request: Request, call_next: Callable):
     """
     if request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("origin")
-        if origin and origin not in _ALLOWED_ORIGINS:
+        if origin and not is_same_origin(origin, request.headers.get("host", "")):
             log.warning("Blocked a cross-origin request from another page")
             return JSONResponse(
                 {"detail": "This request did not come from PocketMind and was blocked."}, status_code=403

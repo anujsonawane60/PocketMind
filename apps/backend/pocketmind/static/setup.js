@@ -128,6 +128,18 @@ Setup.loadDrives = async () => {
   }, list);
 };
 
+/* Unlabelled volumes need a name that matches what they actually are. Calling
+   the system disk a "removable drive" is both wrong and alarming. */
+Setup.describeDrive = (drive) => {
+  if (drive.label) return drive.label;
+  if (drive.is_system_drive) return "System drive";
+  if (drive.kind === "removable") return "Removable drive";
+  if (drive.kind === "network") return "Network drive";
+  if (drive.kind === "cdrom") return "Disc drive";
+  if (drive.kind === "fixed") return drive.is_external ? "External drive" : "Internal drive";
+  return "Drive";
+};
+
 Setup.driveRow = (drive) => {
   const badge = drive.has_pocketmind ? '<span class="tag">PocketMind installed</span>' : "";
   const busy = drive.is_eligible ? "" : ' disabled title="Cannot be used"';
@@ -135,7 +147,7 @@ Setup.driveRow = (drive) => {
     <button class="option" data-drive="${PM.esc(drive.id)}"${busy} type="button">
       <span class="radio" aria-hidden="true"></span>
       <span class="option-body">
-        <span class="option-title">${PM.esc(drive.label || "Removable drive")} (${PM.esc(drive.id)})${badge}</span>
+        <span class="option-title">${PM.esc(Setup.describeDrive(drive))} (${PM.esc(drive.id)})${badge}</span>
         <span class="option-meta">${
           drive.is_eligible
             ? `${PM.esc(drive.filesystem || "Unknown format")}${drive.bus_type ? ` · ${PM.esc(drive.bus_type)}` : ""} · ${PM.bytes(drive.total_bytes)} total`
@@ -185,7 +197,7 @@ Setup.validate = async (drive) => {
     <section class="card">
       <button class="back" id="back">← Choose a different drive</button>
       <div class="eyebrow">Step 1 of 6</div>
-      <h1>${PM.esc(report.drive.label || "Your PocketMind drive")}</h1>
+      <h1>${PM.esc(report.drive.label || `Your PocketMind drive (${report.drive.id})`)}</h1>
       <p class="intro">Here is what PocketMind found. Nothing has been changed on the drive.</p>
       <div class="spec-grid">
         <div class="spec"><span>Drive</span><b>${PM.esc(report.drive.id)}</b></div>
@@ -461,6 +473,7 @@ Setup.models = async () => {
 Setup.modelCard = (fit, label) => {
   const model = fit.model;
   const blocked = fit.blockers.length > 0;
+  const slow = fit.expected_speed.startsWith("Slow");
   return `
     <article class="model-card ${label === "Recommended for you" ? "recommended" : ""} ${blocked ? "blocked" : ""}">
       <div class="model-head">
@@ -479,9 +492,12 @@ Setup.modelCard = (fit, label) => {
         <span>Download <b>${PM.bytes(model.download_size_bytes)}</b>${model.size_is_estimate ? " (estimate)" : ""}</span>
         <span>Memory needed <b>${PM.bytes(model.min_ram_bytes)}</b></span>
         <span>Context <b>${(model.context_length / 1024).toFixed(0)}K</b></span>
+        <span>Speed <b>${PM.esc(fit.expected_speed.split("—")[0].trim())}</b></span>
         <span>Licence <b>${PM.esc(model.license)}</b></span>
       </div>
       <ul class="reasons">${fit.reasons.map((reason) => `<li>${PM.esc(reason)}</li>`).join("")}</ul>
+      ${slow && !blocked ? `<ul class="reasons cautions"><li>${PM.esc(fit.expected_speed)}. Replies will
+        arrive slowly on this computer — a smaller model will feel much more responsive.</li></ul>` : ""}
       ${fit.blockers.length ? `<ul class="reasons blockers">${fit.blockers.map((b) => `<li>${PM.esc(b)}</li>`).join("")}</ul>` : ""}
     </article>`;
 };

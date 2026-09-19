@@ -132,7 +132,13 @@ App.paint = async () => {
   await App.renderView();
 };
 
+/* Views render asynchronously, so a slow one can finish after the user has
+   already switched away. Anything that touches the DOM checks first that the
+   view it belongs to is still the one on screen. */
+App.isCurrent = () => App.view === App.renderingView;
+
 App.head = (title, subtitle, actionsHtml = "") => {
+  if (!App.isCurrent()) return;
   PM.one("#view-title").textContent = title;
   PM.one("#view-sub").textContent = subtitle || "";
   const actions = PM.one(".head-actions");
@@ -144,6 +150,7 @@ App.head = (title, subtitle, actionsHtml = "") => {
 
 App.body = (html, flush = false) => {
   const body = PM.one("#view-body");
+  if (!body || !App.isCurrent()) return body;
   body.className = flush ? "main-body flush" : "main-body";
   body.innerHTML = html;
   return body;
@@ -175,6 +182,7 @@ App.refreshState = async () => {
 };
 
 App.renderView = async () => {
+  App.renderingView = App.view;
   try {
     await App.views[App.view]();
   } catch (error) {
@@ -317,9 +325,9 @@ App.messageHtml = (message) => `
   </div>`;
 
 App.addConversationControls = () => {
-  if (!App.conversationId) return;
+  if (!App.conversationId || !App.isCurrent()) return;
   const actions = PM.one(".head-actions");
-  if (actions.dataset.chatControls) return;
+  if (!actions || actions.dataset.chatControls) return;
   actions.dataset.chatControls = "1";
   actions.insertAdjacentHTML("afterbegin", `
     <button class="secondary" id="rename-chat">Rename</button>
@@ -712,6 +720,18 @@ App.vaultEntries = async (status) => {
   } catch (error) {
     PM.vaultToken = null;
     return App.vaultUnlock(status);
+  }
+
+  // Keep the header pill honest: the vault may have auto-locked, or been
+  // unlocked, since the shell was last painted.
+  if (PM.state?.vault?.state !== status.state) {
+    await App.refreshState();
+    const pill = PM.one(".head-actions .pill:nth-child(2)");
+    if (pill) {
+      pill.className = `pill ${status.state === "unlocked" ? "warn" : "good"}`;
+      pill.innerHTML = `<span class="dot"></span>${
+        status.state === "unlocked" ? "Vault unlocked" : "Vault locked"}`;
+    }
   }
 
   App.body(`

@@ -116,7 +116,49 @@ def test_a_same_origin_write_is_allowed(client):
     response = client.post(
         "/api/setup/password-strength",
         json={"password": "whatever it is"},
-        headers={"Origin": "http://127.0.0.1:8000"},
+        headers={"Origin": "http://127.0.0.1:8000", "Host": "127.0.0.1:8000"},
+    )
+    assert response.status_code == 200
+
+
+def test_an_origin_that_does_not_match_the_host_is_blocked(client):
+    response = client.post(
+        "/api/setup/password-strength",
+        json={"password": "whatever it is"},
+        headers={"Origin": "http://127.0.0.1:8000", "Host": "127.0.0.1:9000"},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("origin", "host", "allowed"),
+    [
+        # A custom --port must keep working; the check compares against Host.
+        ("http://127.0.0.1:9000", "127.0.0.1:9000", True),
+        ("http://localhost:9000", "127.0.0.1:9000", True),
+        ("http://127.0.0.1:8000", "localhost:8000", True),
+        ("http://127.0.0.1:8000", "127.0.0.1:8000", True),
+        # A different port is a different origin.
+        ("http://127.0.0.1:9000", "127.0.0.1:8000", False),
+        # And anything off-machine is refused outright.
+        ("https://evil.example", "127.0.0.1:8000", False),
+        ("http://evil.example:8000", "127.0.0.1:8000", False),
+        ("null", "127.0.0.1:8000", False),
+        ("file://", "127.0.0.1:8000", False),
+    ],
+)
+def test_same_origin_rules(origin, host, allowed):
+    from pocketmind.main import is_same_origin
+
+    assert is_same_origin(origin, host) is allowed
+
+
+def test_a_write_on_a_custom_port_is_not_blocked(client):
+    """Regression: the allowed origin used to be hardcoded to port 8000."""
+    response = client.post(
+        "/api/setup/password-strength",
+        json={"password": "whatever it is"},
+        headers={"Origin": "http://127.0.0.1:9321", "Host": "127.0.0.1:9321"},
     )
     assert response.status_code == 200
 

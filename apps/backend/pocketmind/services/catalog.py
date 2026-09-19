@@ -379,7 +379,8 @@ def evaluate(
         reasons.append(_USE_CASE_REASONS[case])
     if model.capabilities.reasoning:
         reasons.append("Handles multi-step reasoning")
-    reasons.append(speed_text)
+    # Speed is reported separately as `expected_speed`. Listing "Slow — large
+    # model on the CPU" among the ticked benefits read as a selling point.
 
     # Ranking: capability, how well it matches what the user said they want,
     # and how fast it will actually feel on this machine. Speed carries real

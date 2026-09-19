@@ -285,6 +285,9 @@ legend { font-size: 13.5px; padding: 0; margin-bottom: 9px; }
 .reasons li { padding-left: 20px; position: relative; color: var(--muted); margin-bottom: 3px; }
 .reasons li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); }
 .reasons.blockers li::before { content: "✕"; color: var(--danger); }
+.reasons.cautions { margin-top: 6px; }
+.reasons.cautions li { color: var(--warn); }
+.reasons.cautions li::before { content: "!"; color: var(--warn); font-weight: 700; }
 
 /* -------------------------------------------------------------- progress */
 
@@ -356,11 +359,17 @@ legend { font-size: 13.5px; padding: 0; margin-bottom: 9px; }
 /* ------------------------------------------------------------------ chat */
 
 .chat-layout { display: grid; grid-template-columns: 250px 1fr; flex: 1; min-height: 0; }
-.chat-list { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.chat-list { border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
 .chat-list-head { padding: 14px; border-bottom: 1px solid var(--line-soft); display: grid; gap: 9px; }
-.chat-list-items { overflow-y: auto; flex: 1; padding: 8px; display: grid; gap: 4px; align-content: start; }
+.chat-list-items {
+  overflow-y: auto; flex: 1; padding: 8px; display: grid; gap: 4px;
+  align-content: start;
+  /* Grid items default to min-width:auto, which stops long titles from
+     shrinking and lets them spill past the sidebar instead of ellipsing. */
+  min-width: 0;
+}
 .chat-item {
-  width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
+  width: 100%; min-width: 0; text-align: left; border: 0; background: none; cursor: pointer;
   padding: 10px 12px; border-radius: var(--radius-sm); color: var(--muted);
 }
 .chat-item:hover { background: var(--surface-2); color: var(--text); }
