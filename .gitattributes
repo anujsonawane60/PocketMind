@@ -1,0 +1,18 @@
+# Normalise text to LF in the repository. Git checks out native line endings,
+# so Windows contributors still get CRLF in their working copy.
+* text=auto
+
+# Windows shells mis-parse these without CRLF.
+*.cmd  text eol=crlf
+*.bat  text eol=crlf
+*.ps1  text eol=crlf
+
+# Shell scripts break with CRLF.
+*.sh   text eol=lf
+
+# Never transform these.
+*.gguf binary
+*.zip  binary
+*.png  binary
+*.jpg  binary
+*.ico  binary

@@ -1,0 +1,10 @@
+# Runtime dependencies for PocketMind.
+# Prefer `pip install -e .` which reads pyproject.toml; this file exists so that
+# `pip install -r requirements.txt` also works for people who expect it.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+psutil>=6,<8
+cryptography>=43,<47
+argon2-cffi>=23,<26
+python-multipart>=0.0.20,<1
+pypdf>=5,<7
